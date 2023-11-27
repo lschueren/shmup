@@ -11,16 +11,15 @@ let downkey = 40;
 let leftkey = 37;
 let rightkey = 39;
 let shootkey = 32;
-
 let bullets = [];
-
+let enemies = [];
 
 
 /// Player Objekt
   
 const Player = {      
-        x: 100,
-        y: 100,
+        x: 512,
+        y: 600,
         height: 100,
         width: 100,
 	    speed: 15,
@@ -35,7 +34,6 @@ const Player = {
         shoot: function(){
             this.bullettimer--
             if (bullets.length<50 && player.bullettimer <= 0) { 
-                             
                     bullet = Object.create(Bullet);
                     bullet.x = this.x + (this.width/2 - bullet.width/2.4);
                     bullet.y = this.y;
@@ -44,10 +42,12 @@ const Player = {
                 };
            
             }
-        }
-     
-    Player.img = new Image();
-    Player.img.src = "player.png";
+        };
+        Player.img = new Image();
+        Player.img.src = "player.png";
+
+
+
 
 /// Bullet Objekt
 const Bullet = {      
@@ -55,23 +55,38 @@ const Bullet = {
         y: 0,
         height: 20,
         width: 20,
-        speed: 20
+        speed: 20,
+        moveUp: false,
+        moveDown: false,
+        moveLeft: false,
+        moveRight: false
         
-    };
-    Bullet.img = new Image();
-    Bullet.img.src = "bullet.png";
+        };
+        Bullet.img = new Image();
+        Bullet.img.src = "bullet.png";
 
 
 
 
 /// Enemy Objekt
 
-////////////TODO
+const Enemy = {
+        x: canvas.width/2,
+        y: 0,
+        height: 100,
+        width: 100,
+	    speed: 1,
+        health: 100
+
+        };
+        Enemy.img = new Image();
+        Enemy.img.src = "enemy.png";
+
+
 
 
 
 // Check Input
-
 
 let arrow_keys_handler = function(e) {
     switch(e.keyCode){
@@ -80,6 +95,7 @@ let arrow_keys_handler = function(e) {
         default: break; // do not block other keys
     }
 };
+
 let getInput = function( event ){
     if (event.keyCode == upkey){
         player.keyUp = true;
@@ -95,9 +111,11 @@ let getInput = function( event ){
     } 
     if (event.keyCode == shootkey){
         player.keyShoot = true;
-    }
-    
+    }   
 };
+
+
+
 let stopInput = function( event ){
     if (event.keyCode == upkey){
         player.keyUp = false;
@@ -118,28 +136,29 @@ let stopInput = function( event ){
 };
 
 
+
+
+
 //Kollisionsabfrage
 function checkCollision(){
-
-    ///Player Ränder
-
-   /* if (player.x < 0){
-	player.x = 0;
+    for (let i = 0; i < bullets.length; i++){
+            if (bullets[i].y <= enemy.y+enemy.height && bullets[i].x > enemy.x && bullets[i].x < enemy.x + enemy.width ){
+                bullets.splice(i);
+                console.log("spliced a bullet!"); 
+            }
     }
-    if (player.x+player.width >= canvas.width){
-	player.x = canvas.width-player.width;
+
+    for (let i = 0; i < enemies.length; i++){
+      if(enemies[i].y+enemies[i].height >= canvas.height){
+        enemies.splice(i);
+ 
+      }
     }
-    if (player.y < 10){
-        player.y = 0;
-    }*/
-
-    ///Bullets Rand
-
-
-
 };
 
-//Update
+
+
+//Update Funktionen
 function updatePlayer(){
     if (player.keyUp && player.y >= 20){
         player.y = player.y - player.speed;
@@ -155,49 +174,55 @@ function updatePlayer(){
         player.x = player.x - player.speed;
     }
     if (player.keyShoot){
-
      player.shoot();
-
     };
 };
 
+function updateEnemy(){
+    
 
+};
 
 
 //Draw Funktionen
-
 function clearFrame(){
-
- 
-
     c.clearRect(0 ,0, canvas.width, canvas.height);
-
 };
+
+
+function drawEnemy(){
+for (let i = 0; i < enemies.length; i++){
+    if (enemies.length >0){
+        enemies[i].y = enemies[i].y+enemies[i].speed;
+    }
+        c.drawImage(enemies[i].img, enemies[i].x, enemies[i].y, enemies[i].width, enemies[i].height);
+        console.log(enemies.length);
+    }
+};
+
 
 function drawPlayer (){
-    
     c.drawImage(player.img, player.x, player.y, player.width, player.height);
-
 };
 
+
 function drawBullets (){
-
-
-   
     for (let i = 0; i< bullets.length; i++) {
-        let index = i;
+ 
         bullets[i].y = bullets[i].y-bullets[i].speed;
         c.drawImage(bullets[i].img, bullets[i].x, bullets[i].y, bullets[i].width, bullets[i].height);
         if (bullets[i].y <= 0){bullets.splice(0,1);} ///// An Position 0, 1 Element weglöschen. 
+
     }
-}
+};
 
 
 
 
 
 
-//Game
+///////////////////////////////////////////////////////////
+////GAME
 
 window.onload = function(){
 
@@ -207,17 +232,20 @@ window.onload = function(){
     window.addEventListener("keyup", stopInput, false);
     
     player = Object.create(Player);
-
+    enemy = Object.create (Enemy);
+    enemies.push(enemy);
     /// Game Loop
     function gameLoop(){
         //Daten aktualisieren
         checkCollision();
         updatePlayer();
+        updateEnemy();
+
         //Draw
         clearFrame();
         drawPlayer();
+        drawEnemy();
         drawBullets();
-    
         window.requestAnimationFrame(gameLoop); 
     };
 
