@@ -1,10 +1,8 @@
-
-
 //Game Setup
 let canvas = document.getElementById('canvas');
 let c = canvas.getContext('2d');
-    canvas.width  = 1024;
-    canvas.height = 700;
+    canvas.width  = 800;
+    canvas.height = 600;
 
 let upkey = 38;
 let downkey = 40;
@@ -13,15 +11,18 @@ let rightkey = 39;
 let shootkey = 32;
 let bullets = [];
 let enemies = [];
+let players = [];
 
+let killcount = 0;
+let spawnSpeed = 1000;
 
 /// Player Objekt
   
 const Player = {      
-        x: 512,
-        y: 600,
-        height: 100,
-        width: 100,
+        x: null,
+        y: null,
+        height: 50,
+        width: 50,
 	    speed: 15,
         keyUp: false,
         keyDown: false,
@@ -33,12 +34,12 @@ const Player = {
         shooting: false,
         shoot: function(){
             this.bullettimer--
-            if (bullets.length<50 && player.bullettimer <= 0) { 
+            if (player.bullettimer <= 0) { 
                     bullet = Object.create(Bullet);
                     bullet.x = this.x + (this.width/2 - bullet.width/2.4);
                     bullet.y = this.y;
                     bullets.push(bullet);
-                    this.bullettimer = 5;
+                    this.bullettimer = 10;
                 };
            
             }
@@ -47,15 +48,13 @@ const Player = {
         Player.img.src = "player.png";
 
 
-
-
 /// Bullet Objekt
 const Bullet = {      
         x: 0,
         y: 0,
-        height: 20,
-        width: 20,
-        speed: 20,
+        height: 10,
+        width: 10,
+        speed: 5,
         moveUp: false,
         moveDown: false,
         moveLeft: false,
@@ -66,24 +65,23 @@ const Bullet = {
         Bullet.img.src = "bullet.png";
 
 
-
-
 /// Enemy Objekt
 
 const Enemy = {
-        x: canvas.width/2,
-        y: 0,
-        height: 100,
-        width: 100,
-	    speed: 1,
-        health: 100
-
+    x: canvas.width/2,
+    y: 0,
+    height: 50,
+    width: 50,
+    speed: 2,
+    health: 20,
+    move: function(){
+	this.y = this.y+this.speed;
+    }
+    
+       
         };
         Enemy.img = new Image();
         Enemy.img.src = "enemy.png";
-
-
-
 
 
 // Check Input
@@ -139,21 +137,40 @@ let stopInput = function( event ){
 
 
 
-//Kollisionsabfrage
+//////////////////Kollisionsabfrage
+ 
 function checkCollision(){
+    
+    /// Bullets + Enemies
     for (let i = 0; i < bullets.length; i++){
-            if (bullets[i].y <= enemy.y+enemy.height && bullets[i].x > enemy.x && bullets[i].x < enemy.x + enemy.width ){
-                bullets.splice(i);
-                console.log("spliced a bullet!"); 
-            }
+        for (let j = 0; j < enemies.length; j++){
+      
+            if (bullets[i] != undefined && bullets[i].y <= enemies[j].y + enemies[j].height
+            && bullets[i].x > enemies[j].x
+            && bullets[i].x < enemies[j].x + enemies[j].width){
+                    bullets.splice(i, 1);
+                    enemies[j].health = enemies[j].health - 10;
+                    if (enemies[j].health <= 0 ){
+                            enemies.splice(j, 1);
+                            killcount = killcount+1;
+                    }
+            } 
+
+        }
     }
 
-    for (let i = 0; i < enemies.length; i++){
-      if(enemies[i].y+enemies[i].height >= canvas.height){
-        enemies.splice(i);
- 
-      }
+
+    for (let j = 0; j < enemies.length; j++){
+      
+        if (player != undefined && player.y <= enemies[j].y + enemies[j].height
+        && player.x > enemies[j].x
+        && player.x < enemies[j].x + enemies[j].width){
+        player.x = undefined;
+        player.y = undefined;
+        }
+        
     }
+  
 };
 
 
@@ -162,7 +179,6 @@ function checkCollision(){
 function updatePlayer(){
     if (player.keyUp && player.y >= 20){
         player.y = player.y - player.speed;
-
     }
     else if (player.keyDown && player.y <= canvas.height-player.height-10){
         player.y = player.y + player.speed;
@@ -178,25 +194,29 @@ function updatePlayer(){
     };
 };
 
-function updateEnemy(){
-    
-
+function updateEnemies(){
+    for (let i = 0; i < enemies.length; i++){
+	//bewegen
+	enemies[i].move();
+        //wenn health weg - enemy weg
+        if (enemies[i].health <=0 || enemies[i].y > canvas.height){
+            enemies.splice(i,1 );
+        }
+    }
 };
 
 
-//Draw Funktionen
+/////////////////////////////Draw Funktionen
 function clearFrame(){
     c.clearRect(0 ,0, canvas.width, canvas.height);
 };
 
 
-function drawEnemy(){
-for (let i = 0; i < enemies.length; i++){
-    if (enemies.length >0){
-        enemies[i].y = enemies[i].y+enemies[i].speed;
-    }
-        c.drawImage(enemies[i].img, enemies[i].x, enemies[i].y, enemies[i].width, enemies[i].height);
-        console.log(enemies.length);
+function drawEnemies(){
+    for (let i = 0; i < enemies.length; i++){
+        if (enemies.length >0){
+            c.drawImage(enemies[i].img, enemies[i].x, enemies[i].y, enemies[i].width, enemies[i].height);
+        }
     }
 };
 
@@ -207,23 +227,33 @@ function drawPlayer (){
 
 
 function drawBullets (){
+
+    if (bullets.length>0){
     for (let i = 0; i< bullets.length; i++) {
  
         bullets[i].y = bullets[i].y-bullets[i].speed;
         c.drawImage(bullets[i].img, bullets[i].x, bullets[i].y, bullets[i].width, bullets[i].height);
-        if (bullets[i].y <= 0){bullets.splice(0,1);} ///// An Position 0, 1 Element weglöschen. 
-
+        if (bullets[i].y <= 0){bullets.splice(i, 1);} ///// An Position 0, eine Bullet aus dem Array enemies löschen, wenn sie am oberen rand angekommen ist 
+    }
     }
 };
 
+function generateEnemies(){
+    for (let i=0; i<1; i++){
+        enemy = Object.create (Enemy);
+        enemy.x = Math.floor(Math.random() * (canvas.width-enemy.width));
+       enemies.push(enemy);
+       spawnSpeed = spawnSpeed +1;
+        }
 
+}
 
 
 
 
 ///////////////////////////////////////////////////////////
-////GAME
-
+///////////     GAME    //////////////////////////////////
+//////////////////////////////////////////////////////////
 window.onload = function(){
 
     ///Event Listener Setup
@@ -232,20 +262,31 @@ window.onload = function(){
     window.addEventListener("keyup", stopInput, false);
     
     player = Object.create(Player);
-    enemy = Object.create (Enemy);
-    enemies.push(enemy);
+    player.x = canvas.width/2;
+    player.y = canvas.height-player.height;
+    
+    setInterval(generateEnemies, spawnSpeed);
+    
     /// Game Loop
     function gameLoop(){
         //Daten aktualisieren
-        checkCollision();
+        checkCollision(player);
         updatePlayer();
-        updateEnemy();
+        updateEnemies();
 
         //Draw
         clearFrame();
         drawPlayer();
-        drawEnemy();
+        drawEnemies();
         drawBullets();
+	
+
+        //GUI
+        c.font = "50px serif";
+        c.fillText(killcount,20,50);
+        
+
+
         window.requestAnimationFrame(gameLoop); 
     };
 
