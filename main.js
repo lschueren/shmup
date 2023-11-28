@@ -17,7 +17,7 @@ let bullets = [];
 let enemies = [];
 let players = [];
 
-let score = 0000;
+let score = 0;
 let spawnSpeed = 1000;
 
 /// Player Objekt
@@ -215,33 +215,23 @@ function updatePlayer(){
             else if (tick == 15) {player.img.src = "playerIdle1.png"}
             else if (tick == 20) {player.img.src = "playerIdle2.png"}
             else if (tick == 25) {player.img.src = "playerIdle3.png"}
-          
-      
-    
 
- 
-
-    if (player.keyUp && player.y >= 20){
-        player.y = player.y - player.speed;
+            if (player.keyUp && player.y >= 20){
+                player.y = player.y - player.speed;
+            }
+            else if (player.keyDown && player.y <= canvas.height-player.height-10){
+                player.y = player.y + player.speed;
+            }
+            if (player.keyRight && player.x <= canvas.width-player.width-10){
+                player.x = player.x + player.speed;
+            }
+            else if (player.keyLeft && player.x >= 0 + 10){
+                player.x = player.x - player.speed;
+            }
+            if (player.keyShoot){
+            player.shoot();
+            };
     }
-    else if (player.keyDown && player.y <= canvas.height-player.height-10){
-        player.y = player.y + player.speed;
-    }
-    if (player.keyRight && player.x <= canvas.width-player.width-10){
-        player.x = player.x + player.speed;
-    }
-    else if (player.keyLeft && player.x >= 0 + 10){
-        player.x = player.x - player.speed;
-    }
-    if (player.keyShoot){
-     player.shoot();
-    };
-
-    if (!player.alive){
-        setup();
-    }
-
-}
 
 };
 
@@ -343,7 +333,7 @@ function gameReset(){
     player.y = canvas.height-player.height*2;
     
     setInterval(generateEnemies, spawnSpeed);
-    gameLoop();
+    
     }
 
 
@@ -374,6 +364,6 @@ function gameReset(){
     };
 
     setup();
-
+    gameLoop();
 
 };
