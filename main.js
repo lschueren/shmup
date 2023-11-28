@@ -152,10 +152,10 @@ function checkCollision(){
                     enemies[j].health = enemies[j].health - 10;
                     if (enemies[j].health <= 0 ){
                             if (enemies[j].img == enemies[j].img2){
-                               score = score +4000; /// +4 punkte für Speedster
+                               score = score +4000; /// +4000 Bonuspunkte für Speedster Kill
                             }
                             enemies.splice(j, 1);
-                            score = score+1000; /// 1 punkt für normale Feinde
+                            score = score+1000; /// +1000 Punkte für jeden Kill
                             
                     }
             } 
@@ -192,10 +192,11 @@ function checkCollision(){
          
                 player.img.src = "explosion.png";
           
-
+               //nach 3 sekunden explosion weg 
               setTimeout(function(){player.x = undefined;
                                   player.y = undefined;}, 3000);
-              setTimeout(function(){gameReset();}, 6000);
+               //nach 4 sekunden reset                   
+              setTimeout(function(){gameReset();}, 4000);
 
         };
     }
@@ -238,7 +239,7 @@ function updatePlayer(){
 function updateEnemies(){
     for (let i = 0; i < enemies.length; i++){
 	   
-        if (enemies.length > 0 || enemies[i] != undefined){ // mach das folgende nur wenn enemies array etwas enthält
+        if (enemies.length > 0 || enemies[i] != undefined){ //mach das folgende nur wenn enemies array etwas enthält
             
             //bewegen
             enemies[i].move();
@@ -252,7 +253,7 @@ function updateEnemies(){
             //wenn speed größer 5 dann speedster bild
             if (enemies[i].speed >= 5){
             enemies[i].img = enemies[i].img2;  
-            }else {enemies[i].img = enemies[i].img;}
+            }
 
 
             //wenn speedster, dann beweg dich auf den player zu
