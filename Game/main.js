@@ -1,3 +1,5 @@
+window.onload = function(){
+
 //Game Setup
 let canvas = document.getElementById('canvas');
 let c = canvas.getContext('2d');
@@ -32,6 +34,7 @@ const Player = {
         shootKey: false,
         energy: 2000,
         shooting: false,
+        alive: true,
         shoot: function(){
             this.bullettimer--
             if (player.bullettimer <= 0) { 
@@ -40,7 +43,7 @@ const Player = {
                     bullet.y = this.y;
                     bullets.push(bullet);
                     this.bullettimer = 10;
-                };
+                }; 
            
             }
         };
@@ -82,7 +85,8 @@ const Enemy = {
         };
         Enemy.img = new Image();
         Enemy.img.src = "enemy.png";
-
+        Enemy.img2 = new Image();
+        Enemy.img2.src = "speedster.png";
 
 // Check Input
 
@@ -151,8 +155,12 @@ function checkCollision(){
                     bullets.splice(i, 1);
                     enemies[j].health = enemies[j].health - 10;
                     if (enemies[j].health <= 0 ){
+                            if (enemies[j].img.src == "speedster.png"){
+                               killcount = killcount +4; /// +4 punkte für Speedster
+                            }
                             enemies.splice(j, 1);
-                            killcount = killcount+1;
+                            killcount = killcount+1; /// 1 punkt für normale Feinde
+                            
                     }
             } 
 
@@ -160,15 +168,43 @@ function checkCollision(){
     }
 
 
+  
+//Wenn Player mit einem Feind kollidiert, Explosionsbild, dann Leeres Bild nach Timeout / Position undefined setzen
+
+
+
     for (let j = 0; j < enemies.length; j++){
+
+        let playerRight = player.x+player.width
+        let playerLeft = player.x
+        let playerTop = player.y
+        let playerBottom = player.y+player.height
+        let enemyRight = enemies[j].x+enemies[j].width
+        let enemyLeft = enemies[j].x
+        let enemyTop = enemies[j].y
+        let enemyBottom = enemies[j].y+enemies[j].height
+
+
       
-        if (player != undefined && player.y <= enemies[j].y + enemies[j].height
-        && player.x > enemies[j].x
-        && player.x < enemies[j].x + enemies[j].width){
-        player.x = undefined;
-        player.y = undefined;
-        }
-        
+        if (player != undefined 
+            && playerTop <= enemyBottom
+            && playerRight >= enemyLeft 
+            && playerLeft <= enemyRight
+            && playerBottom >= enemyTop
+        ){        
+            player.alive = false;
+ 
+            if (player.img.src != "nix.png"){
+                player.img.src = "explosion.png";
+            }
+
+            setTimeout(function(){player.img.src = "nix.png"; 
+                                  player.x = undefined;
+                                  player.y = undefined;
+                                  setTimeout( gameReset(), 3000);}, 1000);
+
+            //
+        };
     }
   
 };
@@ -177,6 +213,9 @@ function checkCollision(){
 
 //Update Funktionen
 function updatePlayer(){
+ 
+ if (player.alive){ // man kann nur steuern wenn player am leben ist
+
     if (player.keyUp && player.y >= 20){
         player.y = player.y - player.speed;
     }
@@ -192,16 +231,42 @@ function updatePlayer(){
     if (player.keyShoot){
      player.shoot();
     };
+
+    if (!player.alive){
+        setup();
+    }
+
+}
+
 };
 
 function updateEnemies(){
     for (let i = 0; i < enemies.length; i++){
-	//bewegen
-	enemies[i].move();
-        //wenn health weg - enemy weg
-        if (enemies[i].health <=0 || enemies[i].y > canvas.height){
-            enemies.splice(i,1 );
-        }
+	   
+        if (enemies.length > 0){ // mach das folgende nur wenn enemies array etwas enthält
+            
+            //bewegen
+            enemies[i].move();
+            //wenn health weg - enemy weg
+            if (enemies[i].health <=0 || enemies[i].y > canvas.height){
+                enemies.splice(i,1 );
+            }
+    
+            //wenn speed größer 5 dann speedster bild
+            if (enemies[i].speed >= 5){
+            enemies[i].img = enemies[i].img2;  
+            }else {enemies[i].img = enemies[i].img;}
+
+
+            //wenn speedster, dann beweg dich auf den player zu
+            if (enemies[i].img == enemies[i].img2){
+                if (enemies[i].x >= player.x){
+                    enemies[i].x = enemies[i].x - 2
+                    } else{
+                    enemies[i].x = enemies[i].x + 2
+                }
+            }
+        }else {console.log('nix');}
     }
 };
 
@@ -242,10 +307,15 @@ function generateEnemies(){
     for (let i=0; i<1; i++){
         enemy = Object.create (Enemy);
         enemy.x = Math.floor(Math.random() * (canvas.width-enemy.width));
-       enemies.push(enemy);
-       spawnSpeed = spawnSpeed +1;
+        enemy.speed = enemy.speed + Math.floor(Math.random() * 5);
+        enemies.push(enemy);
+        spawnSpeed = spawnSpeed +1;
         }
 
+}
+
+function gameReset(){
+    location.reload();
 }
 
 
@@ -254,23 +324,28 @@ function generateEnemies(){
 ///////////////////////////////////////////////////////////
 ///////////     GAME    //////////////////////////////////
 //////////////////////////////////////////////////////////
-window.onload = function(){
 
+    function setup(){
     ///Event Listener Setup
     window.addEventListener("keydown", arrow_keys_handler, false);
     window.addEventListener("keydown", getInput, false);
     window.addEventListener("keyup", stopInput, false);
     
     player = Object.create(Player);
-    player.x = canvas.width/2;
-    player.y = canvas.height-player.height;
+    player.x = canvas.width/2-player.width/2;
+    player.y = canvas.height-player.height*2;
     
     setInterval(generateEnemies, spawnSpeed);
-    
+    gameLoop();
+    }
+
+
+
     /// Game Loop
     function gameLoop(){
         //Daten aktualisieren
-        checkCollision(player);
+      
+        checkCollision();
         updatePlayer();
         updateEnemies();
 
@@ -279,17 +354,14 @@ window.onload = function(){
         drawPlayer();
         drawEnemies();
         drawBullets();
-	
 
         //GUI
-        c.font = "50px serif";
+        c.font = "50px sans-serif";
         c.fillText(killcount,20,50);
-        
-
-
         window.requestAnimationFrame(gameLoop); 
     };
 
-    gameLoop();
+    setup();
+
 
 };
