@@ -247,7 +247,7 @@ function updateEnemies(){
             if (enemies[i].health <=0 || enemies[i].y > canvas.height){
                 
                 enemies.splice(i,1 );
-                return;
+                continue;
             }
     
             //wenn speed größer 5 dann speedster bild
