@@ -27,7 +27,7 @@ const Player = {
         y: null,
         height: 50,
         width: 50,
-	    speed: 15,
+	    speed: 10,
         keyUp: false,
         keyDown: false,
         keyLeft: false,
